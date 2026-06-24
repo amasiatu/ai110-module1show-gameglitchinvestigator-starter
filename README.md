@@ -27,7 +27,7 @@ It wrote the code, ran away, and now the game is unplayable.
 
 - [The purpose of the game is for the user to have fun guessing numbers between 1 and 100 ]
 - [ I only fixed two bugs but there were more such as: wrong hints, attempts left decrements wrongly, difficulty level gave unintuitive attempts, enter button not working on keypad, out of bounds guesses not checked etc.]
-- [ The fixes I applied were just wrong hints and the enter key not working]
+- [ The fixes I applied were just wrong hints,the enter key not working, and out of bounds guesses]
 
 ## 📸 Demo Walkthrough
 

@@ -41,6 +41,60 @@ def test_enter_key_submits_guess_via_form():
     assert not at.exception
 
 
+def _submit_guess(at, value):
+    """Type a guess into the form and submit it, then return the AppTest."""
+    at.text_input[0].set_value(str(value)).run()
+    at.button[0].click().run()
+    return at
+
+
+def _errors(at):
+    return [e.value for e in at.error]
+
+
+def test_out_of_bounds_high_guess_is_rejected():
+    # Regression test for the bug where guesses outside the playable range
+    # were accepted. On Normal the range is 1-100, so 150 must be rejected
+    # with an out-of-range error and never compared to the secret.
+    at = _submit_guess(AppTest.from_file("app.py").run(), 150)
+
+    assert any("Out of range" in e for e in _errors(at))
+    # The game must still be playable (no win/loss recorded from a bad guess).
+    assert at.session_state["status"] == "playing"
+    assert not at.exception
+
+
+def test_out_of_bounds_low_guess_is_rejected():
+    # Below the minimum (0 and negatives) must also be rejected on Normal.
+    at = _submit_guess(AppTest.from_file("app.py").run(), 0)
+
+    assert any("Out of range" in e for e in _errors(at))
+    assert at.session_state["status"] == "playing"
+    assert not at.exception
+
+
+def test_boundary_values_are_accepted():
+    # The range is inclusive: 1 and 100 are valid guesses on Normal and must
+    # NOT raise an out-of-range error.
+    for boundary in (1, 100):
+        at = _submit_guess(AppTest.from_file("app.py").run(), boundary)
+        assert not any("Out of range" in e for e in _errors(at))
+        assert boundary in at.session_state["history"]
+        assert not at.exception
+
+
+def test_range_tracks_difficulty():
+    # The valid range follows the selected difficulty. Easy is 1-20, so 25 is
+    # in-range for Normal but out-of-range for Easy.
+    at = AppTest.from_file("app.py").run()
+    at.selectbox[0].set_value("Easy").run()
+    _submit_guess(at, 25)
+
+    assert any("Out of range" in e for e in _errors(at))
+    assert "between 1 and 20" in " ".join(_errors(at))
+    assert not at.exception
+
+
 def test_winning_guess():
     # If the secret is 50 and guess is 50, it should be a win.
     outcome, message = check_guess(50, 50)
